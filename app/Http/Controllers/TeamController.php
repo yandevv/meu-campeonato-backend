@@ -10,6 +10,7 @@ use App\Services\TeamService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class TeamController extends Controller
 {
@@ -73,7 +74,11 @@ class TeamController extends Controller
      */
     public function destroy(Team $team): JsonResponse
     {
-        $this->teamService->deleteTeam($team);
+        try {
+            $this->teamService->deleteTeam($team);
+        } catch (ConflictHttpException $e) {
+            return ApiResponse::error($e->getMessage(), Response::HTTP_CONFLICT);
+        }
 
         return response()->json(null, Response::HTTP_NO_CONTENT);
     }
