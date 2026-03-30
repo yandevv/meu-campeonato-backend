@@ -10,7 +10,7 @@ class TeamResource extends JsonResource
     /**
      * Transform the resource into an array.
      *
-     * @return array{id: int, name: string, created_at: string|null, updated_at: string|null}
+     * @return array{id: string, name: string, created_at: string|null, updated_at: string|null}
      */
     public function toArray(Request $request): array
     {
