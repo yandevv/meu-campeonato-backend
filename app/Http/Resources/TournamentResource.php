@@ -10,7 +10,7 @@ class TournamentResource extends JsonResource
     /**
      * Transform the resource into an array.
      *
-     * @return array{id: string, name: string, created_at: string|null, updated_at: string|null}
+     * @return array{id: string, name: string, created_at: string|null, updated_at: string|null, teams?: mixed}
      */
     public function toArray(Request $request): array
     {
@@ -19,6 +19,7 @@ class TournamentResource extends JsonResource
             'name' => $this->name,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
+            'teams' => TournamentTeamResource::collection($this->whenLoaded('teams')),
         ];
     }
 }

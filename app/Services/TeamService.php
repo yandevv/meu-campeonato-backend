@@ -6,6 +6,7 @@ use App\Models\Team;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use RuntimeException;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class TeamService
 {
@@ -31,7 +32,7 @@ class TeamService
      * @throws ModelNotFoundException
      * @throws RuntimeException
      */
-    public function getTeamById(int $id): Team
+    public function getTeamById(string $id): Team
     {
         try {
             return Team::findOrFail($id);
@@ -84,7 +85,13 @@ class TeamService
     public function deleteTeam(Team $team): void
     {
         try {
+            if ($team->tournaments()->exists()) {
+                throw new ConflictHttpException('A team cannot be deleted while linked to a tournament.');
+            }
+
             $team->delete();
+        } catch (ConflictHttpException $e) {
+            throw $e;
         } catch (\Throwable $e) {
             throw new RuntimeException('Failed to delete team: '.$e->getMessage(), 0, $e);
         }
