@@ -126,7 +126,12 @@ This project has domain-specific skills available. You MUST activate the relevan
 
 - When creating models for tests, use the factories for the models. Check if the factory has custom states that can be used before manually setting up the model.
 - Faker: Use methods such as `$this->faker->word()` or `fake()->randomDigit()`. Follow existing conventions whether to use `$this->faker` or `fake()`.
-- When creating tests, make use of `php artisan make:test [options] {name}` to create a feature test, and pass `--unit` to create a unit test. Most tests should be feature tests.
+- This project standardizes on three PHPUnit suites: `Unit`, `Feature`, and `Integration`.
+- `Unit` tests must stay pure PHP with no Laravel boot and no database access. Use them for isolated domain logic and framework-independent collaborators.
+- `Feature` tests are the default for application behavior. Use them for HTTP endpoints, request validation, resources, container wiring, and service flows through Laravel.
+- `Integration` tests are for real PostgreSQL behavior and real external-process boundaries. Use them when database semantics or process execution are part of what is being validated.
+- Database-backed tests should use PostgreSQL with the `testing` database. Do not switch database-backed tests to SQLite just for speed.
+- When creating tests, use `php artisan make:test --phpunit {name}` for Feature or Integration tests and `php artisan make:test --phpunit --unit {name}` for Unit tests. Most tests should be feature tests.
 
 ## Vite Error
 
@@ -145,6 +150,8 @@ This project has domain-specific skills available. You MUST activate the relevan
 
 - This application uses PHPUnit for testing. All tests must be written as PHPUnit classes. Use `php artisan make:test --phpunit {name}` to create a new test.
 - If you see a test using "Pest", convert it to PHPUnit.
+- Prefer `php artisan test` over calling PHPUnit directly unless you need a PHPUnit-only flag.
+- Keep suite intent explicit: `Unit` for pure logic, `Feature` for app behavior, and `Integration` for PostgreSQL semantics or real process boundaries.
 - Every time a test has been updated, run that singular test.
 - When the tests relating to your feature are passing, ask the user if they would like to also run the entire test suite to make sure everything is still passing.
 - Tests should cover all happy paths, failure paths, and edge cases.
@@ -154,7 +161,9 @@ This project has domain-specific skills available. You MUST activate the relevan
 
 - Run the minimal number of tests, using an appropriate filter, before finalizing.
 - To run all tests: `php artisan test --compact`.
+- To run a suite: `php artisan test --compact --testsuite=Unit`, `php artisan test --compact --testsuite=Feature`, or `php artisan test --compact --testsuite=Integration`.
 - To run all tests in a file: `php artisan test --compact tests/Feature/ExampleTest.php`.
 - To filter on a particular test name: `php artisan test --compact --filter=testName` (recommended after making a change to a related file).
+- For parallel execution, prefer `php artisan test --parallel`; use `--recreate-databases` when the parallel databases need to be rebuilt.
 
 </laravel-boost-guidelines>
