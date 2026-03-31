@@ -22,6 +22,7 @@ class TournamentSimulationService
      */
     public function __construct(
         public PythonGoalScorePredictor $goalScorePredictor,
+        public TournamentMatchWinnerResolver $matchWinnerResolver,
     ) {}
 
     /**
@@ -198,7 +199,7 @@ class TournamentSimulationService
             /** @var Team $awayTeam */
             $awayTeam = $pair->get(1);
 
-            if (!$homeTeam instanceof Team || !$awayTeam instanceof Team) {
+            if (! $homeTeam instanceof Team || ! $awayTeam instanceof Team) {
                 throw new RuntimeException(
                     \sprintf(
                         'The %s round received an incomplete matchup.',
@@ -214,7 +215,7 @@ class TournamentSimulationService
                 $awayTeam->getKey(),
             );
 
-            [$winner, $loser] = $this->resolveMatchWinner(
+            [$winner, $loser] = $this->matchWinnerResolver->resolve(
                 $homeTeam,
                 $awayTeam,
                 $prediction['home_goals'],
@@ -244,50 +245,5 @@ class TournamentSimulationService
             'winners' => $winners,
             'losers' => $losers,
         ];
-    }
-
-    /**
-     * @param  array<string, int>  $goalBalances
-     * @param  array<string, int>  $tournamentTeamOrder
-     * @return array{0: Team, 1: Team}
-     */
-    private function resolveMatchWinner(
-        Team $homeTeam,
-        Team $awayTeam,
-        int $homeGoals,
-        int $awayGoals,
-        array $goalBalances,
-        array $tournamentTeamOrder,
-    ): array {
-        // Compare goals scored
-        if ($homeGoals > $awayGoals) {
-            return [$homeTeam, $awayTeam];
-        }
-
-        if ($awayGoals > $homeGoals) {
-            return [$awayTeam, $homeTeam];
-        }
-
-        $homeGoalBalance = $goalBalances[$homeTeam->getKey()] ?? 0;
-        $awayGoalBalance = $goalBalances[$awayTeam->getKey()] ?? 0;
-
-        // Compare goal balances
-        if ($homeGoalBalance > $awayGoalBalance) {
-            return [$homeTeam, $awayTeam];
-        }
-
-        if ($awayGoalBalance > $homeGoalBalance) {
-            return [$awayTeam, $homeTeam];
-        }
-
-        $homeTeamOrder = $tournamentTeamOrder[$homeTeam->getKey()] ?? PHP_INT_MAX;
-        $awayTeamOrder = $tournamentTeamOrder[$awayTeam->getKey()] ?? PHP_INT_MAX;
-
-        // Compare team insertions on the tournament bracket
-        if ($homeTeamOrder <= $awayTeamOrder) {
-            return [$homeTeam, $awayTeam];
-        }
-
-        return [$awayTeam, $homeTeam]; // Fallback if teams are still tied, return away team as winner
     }
 }
