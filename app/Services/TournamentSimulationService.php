@@ -64,7 +64,6 @@ class TournamentSimulationService
                     'teams',
                     'rounds.games.homeTeam',
                     'rounds.games.awayTeam',
-                    'rounds.games.winnerTeam',
                 ]);
             });
         } catch (ConflictHttpException $e) {

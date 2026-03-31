@@ -185,7 +185,6 @@ class TournamentService
                     'teams',
                     'rounds.games.homeTeam',
                     'rounds.games.awayTeam',
-                    'rounds.games.winnerTeam',
                 ])
                 ->findOrFail($tournament->getKey());
 
