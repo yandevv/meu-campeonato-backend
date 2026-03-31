@@ -85,11 +85,7 @@ Check sibling files, related controllers, models, or tests for established patte
 
 ### 8. Testing Patterns → `rules/testing.md`
 
-- Use explicit `Unit`, `Feature`, and `Integration` suites
-- Prefer `Feature` tests for Laravel behavior, `Unit` for pure domain logic, and `Integration` for PostgreSQL or real process boundaries
-- Use PostgreSQL for database-backed tests; do not default DB-backed tests to SQLite
 - `LazilyRefreshDatabase` over `RefreshDatabase` for speed
-- Prefer `php artisan test` with suite filters and `--parallel` for routine execution
 - `assertModelExists()` over raw `assertDatabaseHas()`
 - Factory states and sequences over manual overrides
 - Use fakes (`Event::fake()`, `Exceptions::fake()`, etc.) — but always after factory setup, not before

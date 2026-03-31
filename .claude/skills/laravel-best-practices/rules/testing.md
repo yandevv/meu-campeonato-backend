@@ -1,29 +1,8 @@
 # Testing Best Practices
 
-## Use Explicit `Unit`, `Feature`, and `Integration` Suites
-
-Use `Unit` for pure PHP domain logic that does not need Laravel to boot. Use `Feature` for HTTP endpoints, validation, resources, service wiring, and most application behavior. Use `Integration` when the test depends on real PostgreSQL semantics or a real external-process boundary.
-
-Most tests should be `Feature` tests because they give the best confidence for Laravel applications.
-
-## Use PostgreSQL for Database-Backed Tests
-
-This project uses PostgreSQL in production and expects database-backed tests to match that behavior. Keep `DB_CONNECTION=pgsql` and use the `testing` database for automated tests instead of switching DB-backed tests to SQLite for speed.
-
 ## Use `LazilyRefreshDatabase` Over `RefreshDatabase`
 
 `RefreshDatabase` runs all migrations every test run even when the schema hasn't changed. `LazilyRefreshDatabase` only migrates when needed, significantly speeding up large suites.
-
-## Prefer `php artisan test` With Suite Filters
-
-Use the Artisan test runner for normal workflows:
-
-- `php artisan test --compact --testsuite=Unit`
-- `php artisan test --compact --testsuite=Feature`
-- `php artisan test --compact --testsuite=Integration`
-- `php artisan test --parallel`
-
-For parallel runs against PostgreSQL, Laravel will create per-process test databases automatically. Use `--recreate-databases` when those databases need a clean rebuild.
 
 ## Use Model Assertions Over Raw Database Assertions
 
@@ -62,7 +41,3 @@ Ticket::factory()
     ->recycle(Airline::factory()->create())
     ->create();
 ```
-
-## Use Integration Tests for Real Database or Process Boundaries
-
-If a code path depends on transactions, row locking, query grammar, or a real process invocation, cover it with an `Integration` test instead of downgrading it to a mocked `Feature` or `Unit` test. Keep those tests focused on the specific boundary that needs the real dependency.
