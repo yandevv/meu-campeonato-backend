@@ -38,3 +38,7 @@ Use this skill for all testing work in this repository.
 - Use fakes only after factory setup when model events are required for IDs or related boot logic.
 - Use `recycle()` when nested factories should share the same related model instance.
 - Keep integration tests narrow and focused on the real dependency that justifies them.
+- For controller HTTP behavior, prefer feature tests over unit tests that manually bind `Request`, `ResponseFactory`, or other container services.
+- Keep `Unit` tests limited to pure PHP logic like value objects, resolvers, and deterministic algorithms; do not use static Eloquent alias mocks or separate-process tricks to test thin Eloquent wrappers.
+- Use `Integration` tests for service-layer methods only when the point of the test is the real PostgreSQL-backed behavior of that service method.
+- In HTTP tests, prefer `route()` with the named route over hardcoded endpoint strings so route refactors do not break otherwise-correct tests.
