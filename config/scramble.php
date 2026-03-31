@@ -29,7 +29,8 @@ return [
         /*
          * Description rendered on the home page of the API documentation (`/docs/api`).
          */
-        'description' => '',
+        'description' => 'API documentation for Meu Campeonato, a platform for managing and organizing football tournaments.',
+
     ],
 
     /*
@@ -39,12 +40,12 @@ return [
         /*
          * Define the title of the documentation's website. App name is used when this config is `null`.
          */
-        'title' => null,
+        'title' => 'Meu Campeonato API Documentation',
 
         /*
          * Define the theme of the documentation. Available options are `light`, `dark`, and `system`.
          */
-        'theme' => 'light',
+        'theme' => 'system',
 
         /*
          * Hide the `Try It` feature. Enabled by default.
