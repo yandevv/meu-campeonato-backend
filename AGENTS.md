@@ -24,6 +24,7 @@ This application is a Laravel application and its main Laravel ecosystems packag
 This project has domain-specific skills available. You MUST activate the relevant skill whenever you work in that domain—don't wait until you're stuck.
 
 - `laravel-best-practices` — Apply this skill whenever writing, reviewing, or refactoring Laravel PHP code. This includes creating or modifying controllers, models, migrations, form requests, policies, jobs, scheduled commands, service classes, and Eloquent queries. Triggers for N+1 and query performance issues, caching strategies, authorization and security patterns, validation, error handling, queue and job configuration, route definitions, and architectural decisions. Also use for Laravel code reviews and refactoring existing Laravel code to follow best practices. Covers any task involving Laravel backend PHP code patterns.
+- `project-testing` — Apply this skill whenever you work on PHPUnit tests, phpunit.xml, Composer test scripts, test base classes, or database-backed test setup in this repository. Covers this project's Unit, Feature, and Integration suite policy, PostgreSQL-first testing rules, and parallel test workflow.
 
 ## Conventions
 
@@ -102,6 +103,13 @@ This project has domain-specific skills available. You MUST activate the relevan
 - Prefer PHPDoc blocks over inline comments. Only add inline comments for exceptionally complex logic.
 - Use array shape type definitions in PHPDoc blocks.
 
+=== tests rules ===
+
+# Test Enforcement
+
+- Every change must be programmatically tested. Write a new test or update an existing test, then run the affected tests to make sure they pass.
+- Run the minimum number of tests needed to ensure code quality and speed. Use `php artisan test --compact` with a specific filename or filter.
+
 === laravel/core rules ===
 
 # Do Things the Laravel Way
@@ -158,3 +166,17 @@ This project has domain-specific skills available. You MUST activate the relevan
 - To filter on a particular test name: `php artisan test --compact --filter=testName` (recommended after making a change to a related file).
 
 </laravel-boost-guidelines>
+
+===
+
+# Project Customizations
+
+## Testing
+
+- Activate the `project-testing` skill whenever you work on PHPUnit tests, `phpunit.xml`, Composer test scripts, test base classes, or database-backed test setup in this repository.
+- This project standardizes on three PHPUnit suites: `Unit`, `Feature`, and `Integration`.
+- `Unit` tests must stay pure PHP with no Laravel boot and no database access.
+- `Feature` tests are the default for application behavior.
+- `Integration` tests are for real PostgreSQL behavior and real external-process boundaries.
+- Database-backed tests should use PostgreSQL with the `testing` database. Do not switch database-backed tests to SQLite just for speed.
+- Prefer `php artisan test` with suite filters and `--parallel` for routine execution.

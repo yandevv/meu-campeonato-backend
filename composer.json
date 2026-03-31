@@ -15,6 +15,7 @@
         "laravel/tinker": "^3.0"
     },
     "require-dev": {
+        "brianium/paratest": "^7.20",
         "fakerphp/faker": "^1.23",
         "laravel/boost": "^2.0",
         "laravel/pail": "^1.2.5",
@@ -50,6 +51,22 @@
         "test": [
             "@php artisan config:clear --ansi",
             "@php artisan test"
+        ],
+        "test:unit": [
+            "@php artisan config:clear --ansi",
+            "@php artisan test --compact --testsuite=Unit"
+        ],
+        "test:feature": [
+            "@php artisan config:clear --ansi",
+            "@php artisan test --compact --testsuite=Feature"
+        ],
+        "test:integration": [
+            "@php artisan config:clear --ansi",
+            "@php artisan test --compact --testsuite=Integration"
+        ],
+        "test:parallel": [
+            "@php artisan config:clear --ansi",
+            "@php artisan test --compact --parallel"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",

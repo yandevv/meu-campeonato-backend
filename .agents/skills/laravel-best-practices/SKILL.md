@@ -90,6 +90,9 @@ Check sibling files, related controllers, models, or tests for established patte
 - Factory states and sequences over manual overrides
 - Use fakes (`Event::fake()`, `Exceptions::fake()`, etc.) — but always after factory setup, not before
 - `recycle()` to share relationship instances across factories
+- Prefer named routes such as `route('teams.index')` in HTTP tests instead of hardcoded URIs
+- Do not recreate Laravel container state inside unit tests just to exercise controllers, resources, or responses; move that coverage to feature tests
+- Do not use static Eloquent alias mocking or separate-process workarounds to force service-layer unit tests; if the behavior is really about database interaction, cover it with a narrow integration or feature test instead
 
 ### 9. Queue & Job Patterns → `rules/queue-jobs.md`
 
