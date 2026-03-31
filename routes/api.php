@@ -25,7 +25,9 @@ Route::delete('/teams/{team}', [TeamController::class, 'destroy'])->name('teams.
 Route::get('/tournaments', [TournamentController::class, 'index'])->name('tournaments.index');
 Route::post('/tournaments', [TournamentController::class, 'store'])->name('tournaments.store');
 Route::get('/tournaments/{tournament}', [TournamentController::class, 'show'])->name('tournaments.show');
+Route::get('/tournaments/{tournament}/simulation', [TournamentController::class, 'showSimulation'])->name('tournaments.simulation.show');
 Route::put('/tournaments/{tournament}', [TournamentController::class, 'update'])->name('tournaments.update');
 Route::delete('/tournaments/{tournament}', [TournamentController::class, 'destroy'])->name('tournaments.destroy');
+Route::post('/tournaments/{tournament}/simulate', [TournamentController::class, 'simulate'])->name('tournaments.simulate');
 Route::post('/tournaments/{tournament}/teams', [TournamentController::class, 'attachTeams'])->name('tournaments.teams.store');
 Route::delete('/tournaments/{tournament}/teams/{team}', [TournamentController::class, 'detachTeam'])->name('tournaments.teams.destroy');
