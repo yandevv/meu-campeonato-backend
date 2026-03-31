@@ -68,6 +68,26 @@
             "@php artisan config:clear --ansi",
             "@php artisan test --compact --parallel"
         ],
+        "test:coverage": [
+            "@php artisan config:clear --ansi",
+            "@php artisan test --coverage"
+        ],
+        "test:coverage-html": [
+            "@php artisan config:clear --ansi",
+            "@php artisan test --coverage-html coverage/html"
+        ],
+        "test:coverage-clover": [
+            "@php artisan config:clear --ansi",
+            "@php artisan test --coverage-clover coverage/clover.xml"
+        ],
+        "test:coverage-report": [
+            "@php artisan config:clear --ansi",
+            "@php artisan test --coverage --coverage-html coverage/html --coverage-clover coverage/clover.xml"
+        ],
+        "test:coverage-min": [
+            "@php artisan config:clear --ansi",
+            "@php artisan test --coverage --min=80"
+        ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"
