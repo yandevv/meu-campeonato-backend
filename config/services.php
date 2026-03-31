@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'tournament_simulation' => [
+        'python_binary' => env('TOURNAMENT_SIMULATION_PYTHON_BINARY', 'python3'),
+        'script_path' => env('TOURNAMENT_SIMULATION_SCRIPT_PATH', base_path('scripts/predict_match_score.py')),
+        'timeout' => (int) env('TOURNAMENT_SIMULATION_TIMEOUT', 10),
+    ],
+
 ];

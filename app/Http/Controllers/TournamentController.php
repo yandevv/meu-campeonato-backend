@@ -9,6 +9,7 @@ use App\Http\Resources\TournamentResource;
 use App\Models\Team;
 use App\Models\Tournament;
 use App\Services\TournamentService;
+use App\Services\TournamentSimulationService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,6 +20,7 @@ class TournamentController extends Controller
 {
     public function __construct(
         private TournamentService $tournamentService,
+        private TournamentSimulationService $tournamentSimulationService,
     ) {}
 
     /**
@@ -115,6 +117,42 @@ class TournamentController extends Controller
             return ApiResponse::success(
                 new TournamentResource($tournament),
                 'Team removed from tournament successfully.',
+            );
+        } catch (ConflictHttpException $e) {
+            return ApiResponse::error($e->getMessage(), Response::HTTP_CONFLICT);
+        } catch (NotFoundHttpException $e) {
+            return ApiResponse::error($e->getMessage(), Response::HTTP_NOT_FOUND);
+        }
+    }
+
+    /**
+     * Simulate a tournament and replace any previous simulation.
+     */
+    public function simulate(Tournament $tournament): JsonResponse
+    {
+        try {
+            $tournament = $this->tournamentSimulationService->simulateTournament($tournament);
+
+            return ApiResponse::success(
+                new TournamentResource($tournament),
+                'Tournament simulated successfully.',
+            );
+        } catch (ConflictHttpException $e) {
+            return ApiResponse::error($e->getMessage(), Response::HTTP_CONFLICT);
+        }
+    }
+
+    /**
+     * Display the tournament simulation.
+     */
+    public function showSimulation(Tournament $tournament): JsonResponse
+    {
+        try {
+            $tournament = $this->tournamentService->loadTournamentSimulation($tournament);
+
+            return ApiResponse::success(
+                new TournamentResource($tournament),
+                'Tournament simulation retrieved successfully.',
             );
         } catch (NotFoundHttpException $e) {
             return ApiResponse::error($e->getMessage(), Response::HTTP_NOT_FOUND);

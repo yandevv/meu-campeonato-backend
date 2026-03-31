@@ -138,14 +138,20 @@ class TournamentService
                     ->where('teams.id', $teamId)
                     ->exists();
 
-                if (! $isLinked) {
+                if (!$isLinked) {
                     throw new NotFoundHttpException('The team is not linked to this tournament.');
+                }
+
+                if ($lockedTournament->rounds()->exists()) {
+                    throw new ConflictHttpException('A team cannot be removed from a tournament that already has a simulation.');
                 }
 
                 $lockedTournament->teams()->detach($teamId);
 
                 return $lockedTournament->load('teams');
             });
+        } catch (ConflictHttpException $e) {
+            throw $e;
         } catch (NotFoundHttpException $e) {
             throw $e;
         } catch (ModelNotFoundException $e) {
@@ -164,6 +170,35 @@ class TournamentService
             return $tournament->load('teams');
         } catch (\Throwable $e) {
             throw new RuntimeException('Failed to load tournament roster: '.$e->getMessage(), 0, $e);
+        }
+    }
+
+    /**
+     * @throws ModelNotFoundException
+     * @throws RuntimeException
+     */
+    public function loadTournamentSimulation(Tournament $tournament): Tournament
+    {
+        try {
+            $tournament = Tournament::query()
+                ->with([
+                    'teams',
+                    'rounds.games.homeTeam',
+                    'rounds.games.awayTeam',
+                ])
+                ->findOrFail($tournament->getKey());
+
+            if ($tournament->rounds->isEmpty()) {
+                throw new NotFoundHttpException('The tournament does not have a simulation yet.');
+            }
+
+            return $tournament;
+        } catch (NotFoundHttpException $e) {
+            throw $e;
+        } catch (ModelNotFoundException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            throw new RuntimeException('Failed to load tournament simulation: '.$e->getMessage(), 0, $e);
         }
     }
 
