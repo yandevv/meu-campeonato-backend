@@ -7,6 +7,7 @@ use App\Models\Tournament;
 use App\Models\TournamentRound;
 use App\Services\TournamentService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Tests\IntegrationTestCase;
@@ -95,5 +96,29 @@ class TournamentServiceDetachTeamFromTournamentTest extends IntegrationTestCase
         $this->expectException(ModelNotFoundException::class);
 
         app(TournamentService::class)->detachTeamFromTournament($tournament, $team->getKey());
+    }
+
+    public function test_it_wraps_database_failures_when_detaching_a_team_from_a_tournament(): void
+    {
+        $tournament = Tournament::factory()->create();
+        $team = Team::factory()->create();
+        $originalDefaultConnection = config('database.default');
+
+        $tournament->teams()->attach($team);
+        config()->set('database.default', 'missing');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Failed to detach team from tournament:');
+
+        try {
+            app(TournamentService::class)->detachTeamFromTournament($tournament, $team->getKey());
+        } finally {
+            config()->set('database.default', $originalDefaultConnection);
+
+            $this->assertSame(
+                [$team->getKey()],
+                $tournament->fresh()->teams()->pluck('teams.id')->all(),
+            );
+        }
     }
 }

@@ -5,6 +5,7 @@ namespace Tests\Integration\Services;
 use App\Models\Team;
 use App\Models\Tournament;
 use App\Services\TournamentService;
+use RuntimeException;
 use Tests\IntegrationTestCase;
 
 class TournamentServiceLoadTournamentRosterTest extends IntegrationTestCase
@@ -27,5 +28,29 @@ class TournamentServiceLoadTournamentRosterTest extends IntegrationTestCase
             $teams->modelKeys(),
             $loadedTournament->teams->modelKeys(),
         );
+    }
+
+    public function test_it_wraps_database_failures_when_loading_a_tournament_roster(): void
+    {
+        $tournament = Tournament::factory()->create();
+        $team = Team::factory()->create();
+        $originalConnectionName = $tournament->getConnectionName();
+
+        $tournament->teams()->attach($team);
+        $tournament->setConnection('missing');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Failed to load tournament roster:');
+
+        try {
+            app(TournamentService::class)->loadTournamentRoster($tournament);
+        } finally {
+            $tournament->setConnection($originalConnectionName);
+
+            $this->assertSame(
+                [$team->getKey()],
+                $tournament->fresh()->teams()->pluck('teams.id')->all(),
+            );
+        }
     }
 }

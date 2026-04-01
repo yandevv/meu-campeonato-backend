@@ -4,6 +4,7 @@ namespace Tests\Integration\Services;
 
 use App\Models\Tournament;
 use App\Services\TournamentService;
+use RuntimeException;
 use Tests\IntegrationTestCase;
 
 class TournamentServiceGetAllTournamentsTest extends IntegrationTestCase
@@ -30,5 +31,21 @@ class TournamentServiceGetAllTournamentsTest extends IntegrationTestCase
             $createdTournaments->pluck('name')->all(),
             $tournaments->pluck('name')->all(),
         );
+    }
+
+    public function test_it_wraps_database_failures_when_retrieving_tournaments(): void
+    {
+        $originalDefaultConnection = config('database.default');
+
+        config()->set('database.default', 'missing');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Failed to retrieve tournaments:');
+
+        try {
+            app(TournamentService::class)->getAllTournaments();
+        } finally {
+            config()->set('database.default', $originalDefaultConnection);
+        }
     }
 }

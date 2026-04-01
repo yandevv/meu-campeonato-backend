@@ -9,6 +9,7 @@ use App\Models\Tournament;
 use App\Models\TournamentRound;
 use App\Services\TournamentService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Tests\IntegrationTestCase;
 
@@ -71,6 +72,26 @@ class TournamentServiceLoadTournamentSimulationTest extends IntegrationTestCase
         $this->expectException(ModelNotFoundException::class);
 
         app(TournamentService::class)->loadTournamentSimulation($tournament);
+    }
+
+    public function test_it_wraps_database_failures_when_loading_a_tournament_simulation(): void
+    {
+        $tournament = Tournament::factory()->create();
+        $teams = Team::factory()->count(8)->create();
+        $originalDefaultConnection = config('database.default');
+
+        $tournament->teams()->attach($teams->modelKeys());
+        $this->createSimulatedTournamentGraph($tournament, $teams->all());
+        config()->set('database.default', 'missing');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Failed to load tournament simulation:');
+
+        try {
+            app(TournamentService::class)->loadTournamentSimulation($tournament);
+        } finally {
+            config()->set('database.default', $originalDefaultConnection);
+        }
     }
 
     /**

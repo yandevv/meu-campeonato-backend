@@ -8,6 +8,7 @@ use App\Models\Team;
 use App\Models\Tournament;
 use App\Models\TournamentRound;
 use App\Services\TournamentService;
+use RuntimeException;
 use Tests\IntegrationTestCase;
 
 class TournamentServiceDeleteTournamentTest extends IntegrationTestCase
@@ -54,5 +55,23 @@ class TournamentServiceDeleteTournamentTest extends IntegrationTestCase
             'tournament_id' => $tournament->getKey(),
             'team_id' => $teams[1]->getKey(),
         ]);
+    }
+
+    public function test_it_wraps_database_failures_when_deleting_a_tournament(): void
+    {
+        $tournament = Tournament::factory()->create();
+        $originalConnectionName = $tournament->getConnectionName();
+
+        $tournament->setConnection('missing');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Failed to delete tournament:');
+
+        try {
+            app(TournamentService::class)->deleteTournament($tournament);
+        } finally {
+            $tournament->setConnection($originalConnectionName);
+            $this->assertModelExists(Tournament::query()->findOrFail($tournament->getKey()));
+        }
     }
 }
