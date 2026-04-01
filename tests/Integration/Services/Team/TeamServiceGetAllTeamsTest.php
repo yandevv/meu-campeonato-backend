@@ -4,6 +4,7 @@ namespace Tests\Integration\Services;
 
 use App\Models\Team;
 use App\Services\TeamService;
+use RuntimeException;
 use Tests\IntegrationTestCase;
 
 class TeamServiceGetAllTeamsTest extends IntegrationTestCase
@@ -30,5 +31,21 @@ class TeamServiceGetAllTeamsTest extends IntegrationTestCase
             $createdTeams->pluck('name')->all(),
             $teams->pluck('name')->all(),
         );
+    }
+
+    public function test_it_wraps_database_failures_when_retrieving_teams(): void
+    {
+        $originalDefaultConnection = config('database.default');
+
+        config()->set('database.default', 'missing');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Failed to retrieve teams:');
+
+        try {
+            app(TeamService::class)->getAllTeams();
+        } finally {
+            config()->set('database.default', $originalDefaultConnection);
+        }
     }
 }

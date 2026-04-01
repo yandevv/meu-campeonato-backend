@@ -6,6 +6,7 @@ use App\Models\Team;
 use App\Services\TeamService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Str;
+use RuntimeException;
 use Tests\IntegrationTestCase;
 
 class TeamServiceGetTeamByIdTest extends IntegrationTestCase
@@ -26,5 +27,22 @@ class TeamServiceGetTeamByIdTest extends IntegrationTestCase
         $this->expectException(ModelNotFoundException::class);
 
         app(TeamService::class)->getTeamById((string) Str::uuid());
+    }
+
+    public function test_it_wraps_database_failures_when_retrieving_a_team_by_id(): void
+    {
+        $team = Team::factory()->create();
+        $originalDefaultConnection = config('database.default');
+
+        config()->set('database.default', 'missing');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Failed to retrieve team:');
+
+        try {
+            app(TeamService::class)->getTeamById($team->getKey());
+        } finally {
+            config()->set('database.default', $originalDefaultConnection);
+        }
     }
 }
