@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Http\Controllers;
+namespace Tests\Feature\Http\Controllers\Tournament;
 
 use App\Models\Tournament;
 use Tests\FeatureTestCase;
