@@ -12,6 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('tournament_teams', function (Blueprint $table) {
+            $table->uuid('id')
+                ->primary();
             $table->foreignUuid('tournament_id')
                 ->constrained('tournaments')
                 ->cascadeOnDelete();
