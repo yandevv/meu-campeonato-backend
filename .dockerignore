@@ -1,0 +1,27 @@
+.git
+.github
+.idea
+.vscode
+node_modules
+vendor
+tests
+coverage
+docs
+
+# Docker files (avoid recursive context)
+docker-compose*.yml
+compose*.yaml
+compose*.yml
+
+# Dev/config files
+*.md
+.env
+.env.*
+!.env.example
+.phpunit*
+phpunit.xml
+.editorconfig
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,66 @@
+services:
+  php:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    restart: unless-stopped
+    environment:
+      APP_NAME: "${APP_NAME:-MeuCampeonato}"
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_KEY: "${APP_KEY}"
+      APP_URL: "${APP_URL:-http://localhost:8080}"
+      LOG_CHANNEL: stderr
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: "${DB_DATABASE:-meu_campeonato}"
+      DB_USERNAME: "${DB_USERNAME:-meu_campeonato}"
+      DB_PASSWORD: "${DB_PASSWORD}"
+      CACHE_STORE: database
+      QUEUE_CONNECTION: database
+      SESSION_DRIVER: database
+      TOURNAMENT_SIMULATION_PYTHON_BINARY: python3
+    # Port exposed here because nginx shares this network namespace
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    volumes:
+      - app-storage:/var/www/html/storage/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/up"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    restart: unless-stopped
+    # Share network namespace with php (simulates ECS task networking)
+    network_mode: service:php
+    depends_on:
+      - php
+
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: "${DB_DATABASE:-meu_campeonato}"
+      POSTGRES_USER: "${DB_USERNAME:-meu_campeonato}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD}"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-q", "-d", "${DB_DATABASE:-meu_campeonato}", "-U", "${DB_USERNAME:-meu_campeonato}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  app-storage:
+  postgres-data:
