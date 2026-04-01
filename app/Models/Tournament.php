@@ -22,8 +22,9 @@ class Tournament extends Model
     {
         return $this->belongsToMany(Team::class, 'tournament_teams')
             ->using(TournamentTeam::class)
+            ->withPivot('id')
             ->withTimestamps()
-            ->orderByPivot('created_at');
+            ->orderByPivot('id');
     }
 
     public function rounds(): HasMany
