@@ -51,6 +51,9 @@ RUN apk add --no-cache \
     intl \
     && apk del .build-deps
 
+# Copy composer binary from builder stage
+COPY --from=vendor /usr/bin/composer /usr/bin/composer
+
 # Copy configuration files
 COPY docker/php/php-fpm.conf /usr/local/etc/php-fpm.d/www.conf
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/99-production.ini
@@ -64,8 +67,10 @@ COPY --chown=www-data:www-data . .
 # Copy vendor from builder stage
 COPY --from=vendor --chown=www-data:www-data /app/vendor ./vendor
 
-# Generate optimized autoload (with app code now present)
-RUN composer dump-autoload --optimize --no-dev --no-interaction 2>/dev/null || true
+# Clear stale bootstrap cache and re-discover packages (excludes dev-only providers like Boost)
+RUN rm -f bootstrap/cache/packages.php bootstrap/cache/services.php \
+    && php artisan package:discover --ansi \
+    && composer dump-autoload --optimize --no-dev --no-interaction
 
 # Set storage and cache permissions
 RUN chown -R www-data:www-data storage bootstrap/cache \
