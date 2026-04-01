@@ -6,6 +6,7 @@ use App\Models\Team;
 use App\Models\Tournament;
 use App\Services\TournamentService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
@@ -29,6 +30,12 @@ class TournamentServiceAttachTeamsToTournamentTest extends IntegrationTestCase
         $this->assertEqualsCanonicalizing(
             $teams->modelKeys(),
             $tournament->fresh()->teams()->pluck('teams.id')->all(),
+        );
+        $this->assertTrue(
+            collect(DB::table('tournament_teams')
+                ->where('tournament_id', $tournament->getKey())
+                ->pluck('id'))
+                ->every(static fn (string $id): bool => Str::isUuid($id, version: 7)),
         );
     }
 

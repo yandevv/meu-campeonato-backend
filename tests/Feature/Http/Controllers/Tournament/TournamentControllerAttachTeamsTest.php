@@ -26,6 +26,8 @@ class TournamentControllerAttachTeamsTest extends FeatureTestCase
             ->assertJsonPath('message', 'Teams added to tournament successfully.')
             ->assertJsonPath('data.id', $tournament->getKey())
             ->assertJsonPath('data.name', 'Champions Cup')
+            ->assertJsonPath('data.teams.0.id', $teams[0]->getKey())
+            ->assertJsonPath('data.teams.1.id', $teams[1]->getKey())
             ->assertJsonCount(2, 'data.teams')
             ->assertJsonStructure([
                 'statusCode',

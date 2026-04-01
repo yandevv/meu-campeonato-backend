@@ -23,7 +23,7 @@ class TournamentSimulationService
         try {
             $tournament = Tournament::query()
                 ->with([
-                    'teams' => fn ($query) => $query->orderByPivot('created_at'),
+                    'teams' => fn ($query) => $query->orderByPivot('id'),
                 ])
                 ->findOrFail($tournament->getKey());
 

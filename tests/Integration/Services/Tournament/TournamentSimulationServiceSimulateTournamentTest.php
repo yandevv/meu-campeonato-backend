@@ -245,6 +245,30 @@ class TournamentSimulationServiceSimulateTournamentTest extends IntegrationTestC
         }
     }
 
+    public function test_it_uses_the_pivot_uuidv7_order_as_the_final_tie_breaker(): void
+    {
+        $tournament = Tournament::factory()->create();
+        $teams = Team::factory()->count(8)->create()->reverse()->values();
+
+        $tournament->teams()->attach($teams->modelKeys());
+
+        $this->mock(PythonGoalScorePredictor::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('predict')
+                ->times(8)
+                ->andReturn([
+                    'home_goals' => 0,
+                    'away_goals' => 0,
+                ]);
+        });
+
+        $simulatedTournament = app(TournamentSimulationService::class)->simulateTournament($tournament);
+        $finalRound = $simulatedTournament->rounds->firstWhere('phase', RoundPhase::Finals);
+
+        $this->assertInstanceOf(TournamentRound::class, $finalRound);
+        $this->assertSame($teams[0]->getKey(), $finalRound->games->sole()->winner_team_id);
+        $this->assertSame($teams->modelKeys(), $simulatedTournament->teams->modelKeys());
+    }
+
     /**
      * @return array<int, array{
      *     phase: string,
