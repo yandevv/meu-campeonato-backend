@@ -4,7 +4,7 @@
   <img alt="PHP Version" src="https://img.shields.io/badge/PHP-8.4-777BB4?style=flat&logo=php&logoColor=white" />
   <img alt="Laravel Version" src="https://img.shields.io/badge/Laravel-13-FF2D20?style=flat&logo=laravel&logoColor=white" />
   <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-18-4169E1?style=flat&logo=postgresql&logoColor=white" />
-  <img alt="Coverage" src="https://img.shields.io/badge/Coverage-98.59%25-brightgreen" />
+  <img alt="Coverage" src="https://img.shields.io/badge/Coverage-98.8%25-brightgreen" />
   <a href="https://unlicense.org" target="_blank">
     <img alt="License: Unlicense" src="https://img.shields.io/badge/License-Unlicense-blue.svg" />
   </a>
