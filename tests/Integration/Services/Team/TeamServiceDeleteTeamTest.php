@@ -5,6 +5,7 @@ namespace Tests\Integration\Services;
 use App\Models\Team;
 use App\Models\Tournament;
 use App\Services\TeamService;
+use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Tests\IntegrationTestCase;
 
@@ -33,6 +34,25 @@ class TeamServiceDeleteTeamTest extends IntegrationTestCase
             app(TeamService::class)->deleteTeam($team);
         } finally {
             $this->assertModelExists($team);
+        }
+    }
+
+    public function test_it_wraps_database_failures_when_deleting_a_team(): void
+    {
+        $team = Team::factory()->create();
+        $originalConnectionName = $team->getConnectionName();
+
+        $team->setConnection('missing');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Failed to delete team:');
+
+        try {
+            app(TeamService::class)->deleteTeam($team);
+        } finally {
+            $team->setConnection($originalConnectionName);
+
+            $this->assertModelExists(Team::query()->findOrFail($team->getKey()));
         }
     }
 }

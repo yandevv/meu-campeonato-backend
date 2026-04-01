@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Http\Controllers;
+namespace Tests\Feature\Http\Controllers\Team;
 
 use App\Models\Team;
 use Illuminate\Support\Str;

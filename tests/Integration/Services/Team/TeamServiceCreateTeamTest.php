@@ -20,11 +20,19 @@ class TeamServiceCreateTeamTest extends IntegrationTestCase
 
     public function test_it_wraps_database_failures_when_creating_a_team(): void
     {
+        $originalDefaultConnection = config('database.default');
+
+        config()->set('database.default', 'missing');
+
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Failed to create team:');
 
-        app(TeamService::class)->createTeam([
-            'name' => str_repeat('A', 256),
-        ]);
+        try {
+            app(TeamService::class)->createTeam([
+                'name' => 'Alpha FC',
+            ]);
+        } finally {
+            config()->set('database.default', $originalDefaultConnection);
+        }
     }
 }

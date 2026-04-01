@@ -138,7 +138,7 @@ class TournamentService
                     ->where('teams.id', $teamId)
                     ->exists();
 
-                if (!$isLinked) {
+                if (! $isLinked) {
                     throw new NotFoundHttpException('The team is not linked to this tournament.');
                 }
 

@@ -27,13 +27,23 @@ class TeamServiceUpdateTeamTest extends IntegrationTestCase
 
     public function test_it_wraps_database_failures_when_updating_a_team(): void
     {
-        $team = Team::factory()->create();
+        $team = Team::factory()->create([
+            'name' => 'Alpha FC',
+        ]);
+        $originalConnectionName = $team->getConnectionName();
 
+        $team->setConnection('missing');
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Failed to update team:');
 
-        app(TeamService::class)->updateTeam($team, [
-            'name' => str_repeat('A', 256),
-        ]);
+        try {
+            app(TeamService::class)->updateTeam($team, [
+                'name' => 'Beta FC',
+            ]);
+        } finally {
+            $team->setConnection($originalConnectionName);
+
+            $this->assertSame('Alpha FC', $team->fresh()->name);
+        }
     }
 }
