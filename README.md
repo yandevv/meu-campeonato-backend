@@ -34,6 +34,12 @@
 - [Installation](#installation)
   - [Option 1: Using Laravel Sail (Recommended)](#option-1-using-laravel-sail-recommended)
   - [Option 2: Running Locally](#option-2-running-locally)
+- [Running in Production](#running-in-production)
+  - [Prerequisites](#prerequisites-1)
+  - [1. Configure environment](#1-configure-environment)
+  - [2. Build and start](#2-build-and-start)
+  - [3. Verify](#3-verify)
+  - [Useful commands](#useful-commands)
 - [Configuration](#configuration)
   - [Environment Variables](#environment-variables)
 - [Usage](#usage)
@@ -78,7 +84,7 @@ The simulation result includes a **podium** (1st, 2nd, 3rd place) and detailed r
 - **API Documentation** — Auto-generated OpenAPI/Swagger docs via Scramble
 - **Comprehensive Testing** — Unit, Feature, and Integration test suites
 - **Standardized Responses** — Consistent JSON response format across all endpoints
-- **Containerized** — Docker setup via Laravel Sail with PostgreSQL
+- **Containerized** — Production-grade Docker setup (Nginx + PHP-FPM) and Laravel Sail for development
 
 ---
 
@@ -217,6 +223,78 @@ The API will be available at **http://localhost:8000**.
 
 ---
 
+## Running in Production
+
+The production setup uses two separate Docker images — **Nginx** and **PHP-FPM** — orchestrated via `compose.prod.yml`. They share a network namespace, with Nginx proxying HTTP requests to PHP-FPM over `localhost`.
+
+### Prerequisites
+
+- [Docker](https://www.docker.com/) 20.10+
+- [Docker Compose](https://docs.docker.com/compose/) 2.0+
+
+### 1. Configure environment
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and set the required production values:
+
+```env
+APP_KEY=                       # generate below
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=http://your-domain.com
+
+DB_DATABASE=meu_campeonato
+DB_USERNAME=meu_campeonato_user
+DB_PASSWORD=your_secure_password
+```
+
+Generate `APP_KEY` (no local PHP needed):
+
+```bash
+docker run --rm php:8.4-cli php -r "echo 'base64:'.base64_encode(random_bytes(32)).PHP_EOL;"
+```
+
+### 2. Build and start
+
+```bash
+docker compose -f compose.prod.yml up -d --build
+```
+
+This will:
+- Build the PHP-FPM image (installs dependencies, runs migrations, warms up caches)
+- Build the Nginx image
+- Start PostgreSQL and wait for it to be healthy before starting the app
+
+### 3. Verify
+
+```bash
+# Check all services are healthy
+docker compose -f compose.prod.yml ps
+
+# Hit the health check endpoint
+curl http://localhost:8080/up
+```
+
+The API is available at **http://localhost:8080** (or `APP_PORT` if overridden in `.env`).
+
+### Useful commands
+
+```bash
+# Follow application logs
+docker compose -f compose.prod.yml logs -f php
+
+# Stop all services
+docker compose -f compose.prod.yml down
+
+# Stop and remove volumes (destructive — deletes DB data)
+docker compose -f compose.prod.yml down -v
+```
+
+---
+
 ## Configuration
 
 ### Environment Variables
@@ -341,7 +419,17 @@ meu-campeonato-backend/
 │   ├── Integration/                   # Integration tests
 │   └── Feature/                       # Feature tests
 │
-├── compose.yaml                       # Docker Compose (Laravel Sail)
+├── docker/
+│   ├── nginx/
+│   │   ├── Dockerfile                 # Nginx production image
+│   │   └── nginx.conf                 # Nginx server block
+│   └── php/
+│       ├── Dockerfile                 # PHP-FPM production image (multi-stage)
+│       ├── entrypoint.sh              # Migrations + cache warmup on startup
+│       ├── php-fpm.conf               # FPM pool configuration
+│       └── php.ini                    # Production PHP settings + OPcache
+├── compose.yaml                       # Docker Compose (Laravel Sail — development)
+├── compose.prod.yml                   # Docker Compose (production)
 ├── composer.json                      # PHP dependencies & scripts
 └── .env.example                       # Environment variables template
 ```
