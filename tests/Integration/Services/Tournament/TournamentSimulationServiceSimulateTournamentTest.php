@@ -7,6 +7,7 @@ use App\Models\RoundGame;
 use App\Models\Team;
 use App\Models\Tournament;
 use App\Models\TournamentRound;
+use App\Services\PythonGoalScorePredictor;
 use App\Services\TournamentSimulationRoundBuilder;
 use App\Services\TournamentSimulationService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -18,6 +19,106 @@ use Tests\IntegrationTestCase;
 
 class TournamentSimulationServiceSimulateTournamentTest extends IntegrationTestCase
 {
+    public function test_it_simulates_a_tournament_with_the_real_round_builder_and_persists_a_valid_bracket(): void
+    {
+        $tournament = Tournament::factory()->create();
+        $teams = Team::factory()->count(8)->create();
+
+        $tournament->teams()->attach($teams->modelKeys());
+
+        $this->mock(PythonGoalScorePredictor::class, function (MockInterface $mock) use ($tournament, $teams): void {
+            $tournamentTeamOrder = array_flip($teams->modelKeys());
+
+            $mock->shouldReceive('predict')
+                ->times(8)
+                ->withArgs(fn (string $tournamentId, RoundPhase $roundPhase, string $homeTeamId, string $awayTeamId): bool => $tournamentId === $tournament->getKey()
+                    && isset($tournamentTeamOrder[$homeTeamId], $tournamentTeamOrder[$awayTeamId]))
+                ->andReturnUsing(function (
+                    string $tournamentId,
+                    RoundPhase $roundPhase,
+                    string $homeTeamId,
+                    string $awayTeamId,
+                ) use ($tournamentTeamOrder): array {
+                    $homeTeamOrder = $tournamentTeamOrder[$homeTeamId];
+                    $awayTeamOrder = $tournamentTeamOrder[$awayTeamId];
+                    $homeTeamHasPriority = $homeTeamOrder <= $awayTeamOrder;
+
+                    return match ($roundPhase) {
+                        RoundPhase::QuarterFinals => $homeTeamHasPriority
+                            ? ['home_goals' => 1, 'away_goals' => 0]
+                            : ['home_goals' => 0, 'away_goals' => 1],
+                        RoundPhase::SemiFinals => min($homeTeamOrder, $awayTeamOrder) === 0
+                            ? ($homeTeamHasPriority
+                                ? ['home_goals' => 3, 'away_goals' => 0]
+                                : ['home_goals' => 0, 'away_goals' => 3])
+                            : ($homeTeamHasPriority
+                                ? ['home_goals' => 1, 'away_goals' => 0]
+                                : ['home_goals' => 0, 'away_goals' => 1]),
+                        RoundPhase::ThirdPlace => ['home_goals' => 0, 'away_goals' => 0],
+                        RoundPhase::Finals => ['home_goals' => 1, 'away_goals' => 1],
+                    };
+                });
+        });
+
+        $simulatedTournament = app(TournamentSimulationService::class)->simulateTournament($tournament);
+
+        $this->assertTrue($simulatedTournament->relationLoaded('teams'));
+        $this->assertTrue($simulatedTournament->relationLoaded('rounds'));
+        $this->assertCount(8, $simulatedTournament->teams);
+        $this->assertCount(4, $simulatedTournament->rounds);
+        $this->assertSame([
+            RoundPhase::QuarterFinals,
+            RoundPhase::SemiFinals,
+            RoundPhase::ThirdPlace,
+            RoundPhase::Finals,
+        ], $simulatedTournament->rounds->pluck('phase')->all());
+        $this->assertSame([4, 2, 1, 1], $simulatedTournament->rounds->map(fn (TournamentRound $round): int => $round->games->count())->all());
+
+        foreach ($simulatedTournament->rounds as $round) {
+            $this->assertTrue($round->relationLoaded('games'));
+
+            foreach ($round->games as $game) {
+                $this->assertTrue($game->relationLoaded('homeTeam'));
+                $this->assertTrue($game->relationLoaded('awayTeam'));
+                $this->assertContains($game->winner_team_id, [
+                    $game->home_team_id,
+                    $game->away_team_id,
+                ]);
+            }
+        }
+
+        $quarterFinalGames = $simulatedTournament->rounds[0]->games;
+        $semiFinalGames = $simulatedTournament->rounds[1]->games;
+        $thirdPlaceGame = $simulatedTournament->rounds[2]->games->sole();
+        $finalGame = $simulatedTournament->rounds[3]->games->sole();
+
+        $this->assertEqualsCanonicalizing(
+            $teams->modelKeys(),
+            [
+                ...$quarterFinalGames->pluck('home_team_id')->all(),
+                ...$quarterFinalGames->pluck('away_team_id')->all(),
+            ],
+        );
+        $this->assertEqualsCanonicalizing(
+            $quarterFinalGames->pluck('winner_team_id')->all(),
+            [
+                ...$semiFinalGames->pluck('home_team_id')->all(),
+                ...$semiFinalGames->pluck('away_team_id')->all(),
+            ],
+        );
+        $this->assertEqualsCanonicalizing(
+            $semiFinalGames->pluck('winner_team_id')->all(),
+            [$finalGame->home_team_id, $finalGame->away_team_id],
+        );
+        $this->assertEqualsCanonicalizing(
+            $semiFinalGames->map(fn (RoundGame $game): string => $game->winner_team_id === $game->home_team_id ? $game->away_team_id : $game->home_team_id)->all(),
+            [$thirdPlaceGame->home_team_id, $thirdPlaceGame->away_team_id],
+        );
+        $this->assertSame($teams[0]->getKey(), $finalGame->winner_team_id);
+        $this->assertSame(4, $tournament->fresh()->rounds()->count());
+        $this->assertSame(8, RoundGame::query()->whereHas('round', fn ($query) => $query->where('tournament_id', $tournament->getKey()))->count());
+    }
+
     public function test_it_persists_a_new_simulation_and_returns_the_loaded_graph(): void
     {
         $tournament = Tournament::factory()->create();
@@ -79,7 +180,7 @@ class TournamentSimulationServiceSimulateTournamentTest extends IntegrationTestC
             'winner_team_id' => $teams[0]->getKey(),
         ]);
 
-        $this->mock(TournamentSimulationRoundBuilder::class, function (MockInterface $mock) use ($tournament, $teams): void {
+        $this->mock(TournamentSimulationRoundBuilder::class, function (MockInterface $mock) use ($teams): void {
             $mock->shouldReceive('build')
                 ->once()
                 ->andReturn($this->simulationRoundsFor($teams));
@@ -125,7 +226,7 @@ class TournamentSimulationServiceSimulateTournamentTest extends IntegrationTestC
 
         $tournament->teams()->attach($teams->modelKeys());
 
-        $this->mock(TournamentSimulationRoundBuilder::class, function (MockInterface $mock) use ($tournament, $teams): void {
+        $this->mock(TournamentSimulationRoundBuilder::class, function (MockInterface $mock) use ($teams): void {
             $rounds = $this->simulationRoundsFor($teams);
             $rounds[0]['games'][0]['winner_team_id'] = (string) Str::uuid();
 
