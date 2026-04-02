@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -21,6 +23,18 @@ class RoundGame extends Model
 {
     use HasFactory;
     use HasUuids;
+
+    #[Scope]
+    protected function involvingTeam(Builder $query, Team|string $team): void
+    {
+        $teamId = $team instanceof Team ? $team->getKey() : $team;
+
+        $query->where(function (Builder $builder) use ($teamId): void {
+            $builder
+                ->where('home_team_id', $teamId)
+                ->orWhere('away_team_id', $teamId);
+        });
+    }
 
     public function round(): BelongsTo
     {
