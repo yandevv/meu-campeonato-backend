@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\RoundGame;
 use App\Models\Team;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -40,6 +41,36 @@ class TeamService
             throw $e;
         } catch (\Throwable $e) {
             throw new RuntimeException('Failed to retrieve team: '.$e->getMessage(), 0, $e);
+        }
+    }
+
+    /**
+     * Load recent match history and total match count for a team.
+     *
+     * @throws RuntimeException
+     */
+    public function loadTeamMatchHistory(Team $team, int $limit = 5): Team
+    {
+        try {
+            $matchHistoryQuery = RoundGame::query()->involvingTeam($team);
+            $gamesCount = (clone $matchHistoryQuery)->count();
+            $recentGames = $matchHistoryQuery
+                ->with([
+                    'homeTeam',
+                    'awayTeam',
+                    'round.tournament',
+                ])
+                ->orderByDesc('created_at')
+                ->orderByDesc('id')
+                ->limit($limit)
+                ->get();
+
+            $team->setAttribute('games_count', $gamesCount);
+            $team->setRelation('recentGames', $recentGames);
+
+            return $team;
+        } catch (\Throwable $e) {
+            throw new RuntimeException('Failed to load team match history: '.$e->getMessage(), 0, $e);
         }
     }
 

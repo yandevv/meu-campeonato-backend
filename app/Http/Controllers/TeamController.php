@@ -50,6 +50,8 @@ class TeamController extends Controller
      */
     public function show(Team $team): JsonResponse
     {
+        $team = $this->teamService->loadTeamMatchHistory($team);
+
         return ApiResponse::success(
             new TeamResource($team),
             'Team retrieved successfully.',

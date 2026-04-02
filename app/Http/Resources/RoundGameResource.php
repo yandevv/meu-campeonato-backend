@@ -19,7 +19,9 @@ class RoundGameResource extends JsonResource
      *     away_team_id: string,
      *     winner_team_id: string,
      *     home_team: mixed,
-     *     away_team: mixed
+     *     away_team: mixed,
+     *     round?: array{id: string, phase: string, position: int},
+     *     tournament?: array{id: string, name: string}
      * }
      */
     public function toArray(Request $request): array
@@ -34,6 +36,21 @@ class RoundGameResource extends JsonResource
             'winner_team_id' => $this->winner_team_id,
             'home_team' => $this->whenLoaded('homeTeam', fn () => new TeamResource($this->homeTeam)),
             'away_team' => $this->whenLoaded('awayTeam', fn () => new TeamResource($this->awayTeam)),
+            'round' => $this->whenLoaded('round', fn (): array => [
+                'id' => $this->round->getKey(),
+                'phase' => $this->round->phase->value,
+                'position' => $this->round->position,
+            ]),
+            'tournament' => $this->when(
+                $this->relationLoaded('round')
+                    && $this->round !== null
+                    && $this->round->relationLoaded('tournament')
+                    && $this->round->tournament !== null,
+                fn (): array => [
+                    'id' => $this->round->tournament->getKey(),
+                    'name' => $this->round->tournament->name,
+                ],
+            ),
         ];
     }
 }
