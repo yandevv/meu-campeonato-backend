@@ -45,13 +45,36 @@ class TournamentControllerSimulateTest extends FeatureTestCase
             ->assertJsonCount(2, 'data.rounds.1.games')
             ->assertJsonCount(1, 'data.rounds.2.games')
             ->assertJsonCount(1, 'data.rounds.3.games')
+            ->assertJsonCount(8, 'data.standings')
             ->assertJsonPath('data.rounds.0.phase', RoundPhase::QuarterFinals->value)
             ->assertJsonPath('data.rounds.1.phase', RoundPhase::SemiFinals->value)
             ->assertJsonPath('data.rounds.2.phase', RoundPhase::ThirdPlace->value)
             ->assertJsonPath('data.rounds.3.phase', RoundPhase::Finals->value)
-            ->assertJsonPath('data.podium.first_place.id', $teams[0]->getKey())
-            ->assertJsonPath('data.podium.second_place.id', $teams[6]->getKey())
-            ->assertJsonPath('data.podium.third_place.id', $teams[4]->getKey())
+            ->assertJsonPath('data.standings.0.team.id', $teams[0]->getKey())
+            ->assertJsonPath('data.standings.0.placement', 1)
+            ->assertJsonPath('data.standings.0.last_phase', RoundPhase::Finals->value)
+            ->assertJsonPath('data.standings.0.matches_played', 3)
+            ->assertJsonPath('data.standings.0.wins', 3)
+            ->assertJsonPath('data.standings.0.losses', 0)
+            ->assertJsonPath('data.standings.0.goals_for', 5)
+            ->assertJsonPath('data.standings.0.goals_against', 2)
+            ->assertJsonPath('data.standings.0.goal_balance', 3)
+            ->assertJsonPath('data.standings.1.team.id', $teams[6]->getKey())
+            ->assertJsonPath('data.standings.1.placement', 2)
+            ->assertJsonPath('data.standings.2.team.id', $teams[4]->getKey())
+            ->assertJsonPath('data.standings.2.placement', 3)
+            ->assertJsonPath('data.standings.3.team.id', $teams[2]->getKey())
+            ->assertJsonPath('data.standings.3.placement', 4)
+            ->assertJsonPath('data.standings.4.team.id', $teams[1]->getKey())
+            ->assertJsonPath('data.standings.4.placement', null)
+            ->assertJsonPath('data.standings.4.last_phase', RoundPhase::QuarterFinals->value)
+            ->assertJsonPath('data.standings.4.matches_played', 1)
+            ->assertJsonPath('data.standings.4.wins', 0)
+            ->assertJsonPath('data.standings.4.losses', 1)
+            ->assertJsonPath('data.standings.4.goals_for', 1)
+            ->assertJsonPath('data.standings.4.goals_against', 2)
+            ->assertJsonPath('data.standings.4.goal_balance', -1)
+            ->assertJsonMissingPath('data.podium')
             ->assertJsonStructure([
                 'statusCode',
                 'message',
@@ -81,10 +104,23 @@ class TournamentControllerSimulateTest extends FeatureTestCase
                             ],
                         ],
                     ],
-                    'podium' => [
-                        'first_place',
-                        'second_place',
-                        'third_place',
+                    'standings' => [
+                        '*' => [
+                            'team' => [
+                                'id',
+                                'name',
+                                'created_at',
+                                'updated_at',
+                            ],
+                            'placement',
+                            'last_phase',
+                            'matches_played',
+                            'wins',
+                            'losses',
+                            'goals_for',
+                            'goals_against',
+                            'goal_balance',
+                        ],
                     ],
                 ],
             ]);
