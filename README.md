@@ -69,18 +69,18 @@ Each match's goals are predicted by an external **Python script** (designed to b
 2. If tied — better goal balance wins
 3. If still tied — the team registered first in the tournament wins
 
-The simulation result includes a **podium** (1st, 2nd, 3rd place) and detailed round-by-round match data with scores.
+The simulation result includes **standings** with team placement, aggregate match stats, and detailed round-by-round match data with scores.
 
 ---
 
 ## Features
 
-- **Team Management** — Full CRUD for teams with UUID identifiers
+- **Team Management** — Full CRUD for teams with UUID identifiers, including recent match history on team details
 - **Tournament Management** — Create tournaments and attach up to 8 teams
 - **Bracket Simulation** — Simulate a full knockout tournament (Quarter-finals through Finals)
 - **Goal Score Prediction** — Pluggable Python-based predictor (mock ML model included)
 - **Match Winner Resolution** — Multi-criteria tiebreaker logic for determining winners
-- **Podium Results** — Returns 1st, 2nd, and 3rd place after simulation
+- **Tournament Standings** — Returns team placement plus aggregate simulated stats such as wins, losses, goals for, goals against, and goal balance
 - **API Documentation** — Auto-generated OpenAPI/Swagger docs via Scramble
 - **Comprehensive Testing** — Unit, Feature, and Integration test suites
 - **Standardized Responses** — Consistent JSON response format across all endpoints
@@ -354,6 +354,19 @@ curl -X POST http://localhost/api/tournaments/{tournament_id}/simulate
 curl http://localhost/api/tournaments/{tournament_id}/simulation
 ```
 
+The simulation payload includes the bracket rounds and a `standings` array with one entry per tournament team. Each standings row contains the nested team data plus `placement`, `last_phase`, `matches_played`, `wins`, `losses`, `goals_for`, `goals_against`, and `goal_balance`.
+
+6. **Fetch a team with recent match history:**
+
+```bash
+curl http://localhost/api/teams/{team_id}
+```
+
+The team `show` response includes:
+
+- `games_count` — total persisted matches for that team
+- `recent_games` — the 5 most recent matches, with score, opponent references, round data, and tournament context
+
 ---
 
 ## API Documentation
@@ -364,6 +377,10 @@ Once the application is running, access the interactive **Swagger/OpenAPI** docu
 - **Locally:** http://localhost:8000/docs/api
 
 Powered by [Scramble](https://scramble.dedoc.co/) — auto-generated from route definitions and type hints.
+
+Notable response detail:
+
+- `GET /api/teams/{team}` returns the base team data plus `games_count` and `recent_games`
 
 ---
 
